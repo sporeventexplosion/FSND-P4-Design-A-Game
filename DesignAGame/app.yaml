@@ -1,0 +1,22 @@
+# It seems I have reached my number of apps quota after making far too many projects so I have to this old ID
+application: goodaapp
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+# The favicon file has not been implemented as of yet
+# - url: /favicon\.ico
+#   static_files: favicon.ico
+#   upload: favicon\.ico
+
+- url: /_ah/spi/.*
+  script: api.api
+
+libraries:
+- name: webapp2
+  version: "2.5.2"
+
+- name: endpoints
+  version: latest
