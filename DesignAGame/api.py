@@ -98,9 +98,12 @@ class GamesApi(remote.Service):
                       http_method='GET')
     def get_game(self, request):
         """Return the current game state."""
-        game = _get_by_urlsafe(request.urlsafe_game_key, Game)
+        game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
-            return game.to_form('Time to make a move!')
+            message = 'Time to make a move!'
+            if game.game_over:
+                message = 'Game has already been completed'
+            return game.to_form(message)
         else:
             raise endpoints.NotFoundException('Game not found!')
 
