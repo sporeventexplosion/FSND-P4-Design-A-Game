@@ -172,7 +172,7 @@ class Score(ndb.Model):
     score = ndb.IntegerProperty(required=True)
 
     def to_form(self):
-        return ScoreForm(username=self.user.get().name,
+        return ScoreForm(username=self.user.get().username,
                          datetime=str(self.datetime), score=self.score,
                          moves=self.moves)
 
