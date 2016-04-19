@@ -1,6 +1,6 @@
 import endpoints
 from protorpc import remote, messages
-from google.appengine.api import taskqueue
+from google.appengine.api import taskqueue, memcache
 from google.appengine.ext import ndb
 
 from models import StringMessage, GameForm, NewGameForm, ScoreForms, \
@@ -188,7 +188,7 @@ class GamesApi(remote.Service):
     def get_average_attempts(self, request):
         """Get the cached average moves remaining"""
         return StringMessage(
-                message=memcache.get(MEMCACHE_MOVES_REMAINING) or '')
+                message=memcache.get(MEMCACHE_TOTAL_MOVES) or 'Not cached')
 
     @staticmethod
     def _cache_average_moves():
