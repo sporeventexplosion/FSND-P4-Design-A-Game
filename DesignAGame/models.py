@@ -273,7 +273,7 @@ class HistoryMoveForm(messages.Message):
     card_1 = messages.MessageField(CardForm, 1)
     card_2 = messages.MessageField(CardForm, 2)
 
-    matched = messages.BooleanField(5, required=True)
+    matched = messages.BooleanField(3, required=True)
 
 
 class HistoryForm(messages.Message):
