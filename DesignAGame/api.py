@@ -4,7 +4,8 @@ from google.appengine.api import taskqueue, memcache
 from google.appengine.ext import ndb
 
 from models import StringMessage, GameForm, NewGameForm, ScoreForms, \
-        MakeMoveForm, GameForms
+        MakeMoveForm, GameForms, RankingForm, RankingForms, HistoryForm, \
+        HistoryMoveForm
 from models import User, Game, Score
 
 USER_REQUEST = endpoints.ResourceContainer(
@@ -26,7 +27,7 @@ MEMCACHE_AVERAGE_MOVES = 'AVERAGE_MOVES'
 @endpoints.api(name='games', version='v1')
 class GamesApi(remote.Service):
     def _get_user(self, username):
-        user = User.query(User.username==username).get()
+        user = User.query(User.username == username).get()
         if not user:
             raise endpoints.NotFoundException(
                     'The requested user does not exist!')
@@ -50,7 +51,6 @@ class GamesApi(remote.Service):
         if not isinstance(entity, model):
             raise endpoints.BadRequestException('Incorrect kind')
         return entity
-
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=StringMessage,
@@ -161,7 +161,6 @@ class GamesApi(remote.Service):
             response = game.to_form(message)
             game.previous_choice = -1
 
-
         game.put()
         return response
 
@@ -181,7 +180,7 @@ class GamesApi(remote.Service):
     def get_user_scores(self, request):
         """Get all scores of a user"""
         user = self._get_user(request.username)
-        scores = Score.query(Score.user==user.key)
+        scores = Score.query(Score.user == user.key)
         return ScoreForms(items=[score.to_form() for score in scores])
 
     @endpoints.method(response_message=StringMessage,
@@ -201,7 +200,8 @@ class GamesApi(remote.Service):
     def get_user_games(self, request):
         """Get all in-progress games of a user"""
         user = self._get_user(request.username)
-        games = Game.query(Game.user==user.key, Game.game_over==False).fetch()
+        games = Game.query(Game.user == user.key, Game.game_over == False) \
+            .fetch()
         return GameForms(items=[i.to_form() for i in games])
 
     @endpoints.method(request_message=GET_GAME_REQUEST,
@@ -212,7 +212,7 @@ class GamesApi(remote.Service):
     def cancel_game(self, request):
         """Cancels a game. Only works if game_over is false"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
-        if game.game_over == True:
+        if game.game_over:
             raise endpoints.BadRequestException(
                     'Completed games cannot be canceled')
         game.key.delete()
@@ -236,15 +236,35 @@ class GamesApi(remote.Service):
             scores = query.fetch()
         return ScoreForms(items=[score.to_form() for score in scores])
 
+    @endpoints.method(response_message=RankingForms,
+                      path='/ranking',
+                      name='get_user_rankings',
+                      http_method='GET')
+    def get_user_rankings(self, request):
+        """Returns user rankings (average score in this case)"""
+        users = User.query().fetch()
+        return RankingForms(
+                items=[RankingForm(username=user.username,
+                                   performance=user.performance)
+                       for user in users])
+
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=HistoryForm,
+                      path='/game/history/{urlsafe_game_key}',
+                      name='get_game_history',
+                      http_method='GET')
+    def get_game_history(self, request):
+        game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
+        return game.get_history()
 
     @staticmethod
     def _cache_average_moves():
         """Populates memcache with the average moves remaining of Games"""
-        games = Game.query(Game.game_over==False, projection=('moves')).fetch()
+        games = Game.query(Game.game_over == False, projection=('moves')) \
+            .fetch()
         if games:
             count = len(games)
-            total_moves = sum([game.moves
-                                        for game in games])
+            total_moves = sum([game.moves for game in games])
             average = float(total_moves)/count
             memcache.set(MEMCACHE_AVERAGE_MOVES,
                          'The average moves remaining is %.2f'.format(average))

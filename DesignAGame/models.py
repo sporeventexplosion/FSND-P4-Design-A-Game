@@ -13,6 +13,8 @@ class User(ndb.Model):
     """
     username = ndb.StringProperty(required=True)
     email = ndb.StringProperty()
+    # Average of user's scores. Updated via task queue
+    performance = ndb.FloatProperty(default=0.0)
 
 
 class Game(ndb.Model):
@@ -83,6 +85,15 @@ class Game(ndb.Model):
 
         return matching_card_mapping
 
+    def _get_paired_history(self):
+        history = self.history
+        paired_history = []
+        for i in xrange(0, len(history), 2):
+            history_pair = (history[i], history[i + 1])
+            paired_history.append(history_pair)
+
+        return paired_history
+
     def _calculate_score(self):
         """
         Uses history to generate a score
@@ -99,17 +110,13 @@ class Game(ndb.Model):
 
         score = 0
         perfect_match = True
-        history = self.history
         cards = self.cards
         matching_card_mapping = self._get_matching_card_mapping()
 
         # The number of times a card has been shown, ordered by index.
         view_count = [0] * len(self.cards)
 
-        paired_history = []
-        for i in xrange(0, len(history), 2):
-            history_pair = (history[i], history[i + 1])
-            paired_history.append(history_pair)
+        paired_history = self._get_paired_history
 
         for move in paired_history:
             # Check if match
@@ -132,6 +139,25 @@ class Game(ndb.Model):
 
         # Make sure the score is not negative
         return max(score, 0)
+
+    def get_history(self):
+        paired_history = self._get_paired_history()
+        moves = self.moves
+        history_move_form_list = []
+
+        for move in paired_history:
+            card_1_value = self.cards[move[0]]
+            card_2_value = self.cards[move[1]]
+
+            matched = card_1_value == card_2_value
+            moveform = HistoryMoveForm(card_1_index=move[0],
+                                       card_1_value=card_1_value,
+                                       card_2_index=move[1],
+                                       card_2_value=card_2_value,
+                                       matched=matched)
+            history_move_form_list.append(moveform)
+
+        return HistoryForm(items=history_move_form_list)
 
     def to_form(self, message=None):
         form = GameForm()
@@ -196,14 +222,17 @@ class GameForm(messages.Message):
     game_over = messages.BooleanField(10, required=True)
     message = messages.StringField(11, default='')
 
+
 class NewGameForm(messages.Message):
     """Create a new game"""
     username = messages.StringField(1, required=True)
     num_pairs = messages.IntegerField(2)
 
+
 class MakeMoveForm(messages.Message):
     """Used to make a move in an existing game"""
     card = messages.IntegerField(1, required=True)
+
 
 class ScoreForm(messages.Message):
     """ScoreForm for outbound Score information"""
@@ -217,9 +246,37 @@ class ScoreForms(messages.Message):
     """Return multiple ScoreForms"""
     items = messages.MessageField(ScoreForm, 1, repeated=True)
 
+
 class GameForms(messages.Message):
     """Return multiple ScoreForms"""
     items = messages.MessageField(GameForm, 1, repeated=True)
+
+
+class RankingForm(messages.Message):
+    """Ranks a user based on their performance value"""
+    username = messages.StringField(1, required=True)
+    performance = messages.FloatField(2, required=True)
+
+
+class RankingForms(messages.Message):
+    """Return multiple RankingForms"""
+    items = messages.MessageField(RankingForm, 1, repeated=True)
+
+
+class HistoryMoveForm(messages.Message):
+    """A single move for use in HistoryForm"""
+    card_1_index = messages.IntegerField(1, required=True)
+    card_1_value = messages.IntegerField(2, required=True)
+    card_2_index = messages.IntegerField(3, required=True)
+    card_2_value = messages.IntegerField(4, required=True)
+
+    matched = messages.BooleanField(5, required=True)
+
+
+class HistoryForm(messages.Message):
+    """Holds a list of HistoryMove forms to show history step-by-step"""
+    items = messages.MessageField(HistoryMoveForm, 1, repeated=True)
+
 
 class StringMessage(messages.Message):
     """
