@@ -116,7 +116,7 @@ class Game(ndb.Model):
         # The number of times a card has been shown, ordered by index.
         view_count = [0] * len(self.cards)
 
-        paired_history = self._get_paired_history
+        paired_history = self._get_paired_history()
 
         for move in paired_history:
             # Check if match
@@ -165,13 +165,19 @@ class Game(ndb.Model):
 
         form.moves = self.moves
         form.num_pairs = len(self.cards) / 2
+
+        previous_choice = self.previous_choice
+        current_choice = self.current_choice
+
+        cards = self.cards
+
         # Only add the previous choice if this is the second card in a move
         if not self.is_first_card:
-            form.previous_choice_index = self.previous_choice
-            form.previous_choice_value = self.cards[self.previous_choice]
+            form.previous_choice = CardForm(index=previous_choice,
+                                            value=cards[previous_choice])
         if self.current_choice is not None:
-            form.current_choice_index = self.current_choice
-            form.current_choice_value = self.cards[self.current_choice]
+            form.current_choice = CardForm(index=current_choice,
+                                           value=cards[current_choice])
 
         form.shown_cards = self._uncovered_pairs_to_uncovered_list()
         form.game_over = self.game_over
@@ -203,6 +209,12 @@ class Score(ndb.Model):
                          moves=self.moves)
 
 
+class CardForm(messages.Message):
+    """Represents a single card in a move with index and value"""
+    index = messages.IntegerField(1, required=True)
+    value = messages.IntegerField(2, required=True)
+
+
 class GameForm(messages.Message):
     """Game form for outbound data"""
     urlsafe_key = messages.StringField(1, required=True)
@@ -211,15 +223,15 @@ class GameForm(messages.Message):
     num_pairs = messages.IntegerField(4, required=True)
     # The index and value of the previously chosen card. This is not in the
     # list of shown cards to avoid confusion
-    previous_choice_index = messages.IntegerField(5)
-    previous_choice_value = messages.IntegerField(6)
+    #
+    # TODO: Update previous_choice and current_choice to CardForm
+    previous_choice = messages.MessageField(CardForm, 5)
     # The index and value of the current choice
-    current_choice_index = messages.IntegerField(7)
-    current_choice_value = messages.IntegerField(8)
+    current_choice = messages.MessageField(CardForm, 6)
     # Cards not shown are expressed as -1
-    shown_cards = messages.IntegerField(9, repeated=True)
-    game_over = messages.BooleanField(10, required=True)
-    message = messages.StringField(11, default='')
+    shown_cards = messages.IntegerField(7, repeated=True)
+    game_over = messages.BooleanField(8, required=True)
+    message = messages.StringField(9, default='')
 
 
 class NewGameForm(messages.Message):
@@ -231,12 +243,6 @@ class NewGameForm(messages.Message):
 class MakeMoveForm(messages.Message):
     """Used to make a move in an existing game"""
     card = messages.IntegerField(1, required=True)
-
-
-class CardForm(messages.Message):
-    """Represents a single card in a move with index and value"""
-    index = messages.IntegerField(1, required=True)
-    value = messages.IntegerField(2, required=True)
 
 
 class ScoreForm(messages.Message):
