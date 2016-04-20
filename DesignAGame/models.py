@@ -144,20 +144,19 @@ class Game(ndb.Model):
         paired_history = self._get_paired_history()
         moves = self.moves
         history_move_form_list = []
+        cards = self.cards
 
         for move in paired_history:
-            card_1_value = self.cards[move[0]]
-            card_2_value = self.cards[move[1]]
-
-            matched = card_1_value == card_2_value
-            moveform = HistoryMoveForm(card_1_index=move[0],
-                                       card_1_value=card_1_value,
-                                       card_2_index=move[1],
-                                       card_2_value=card_2_value,
+            matched = cards[move[0]] == cards[move[1]]
+            moveform = HistoryMoveForm(card_1=CardForm(index=move[0],
+                                                       value=cards[move[0]]),
+                                       card_2=CardForm(index=move[1],
+                                                       value=cards[move[1]]),
                                        matched=matched)
+
             history_move_form_list.append(moveform)
 
-        return HistoryForm(items=history_move_form_list)
+        return HistoryForm(moves=history_move_form_list)
 
     def to_form(self, message=None):
         form = GameForm()
@@ -234,6 +233,12 @@ class MakeMoveForm(messages.Message):
     card = messages.IntegerField(1, required=True)
 
 
+class CardForm(messages.Message):
+    """Represents a single card in a move with index and value"""
+    index = messages.IntegerField(1, required=True)
+    value = messages.IntegerField(2, required=True)
+
+
 class ScoreForm(messages.Message):
     """ScoreForm for outbound Score information"""
     username = messages.StringField(1, required=True)
@@ -265,17 +270,15 @@ class RankingForms(messages.Message):
 
 class HistoryMoveForm(messages.Message):
     """A single move for use in HistoryForm"""
-    card_1_index = messages.IntegerField(1, required=True)
-    card_1_value = messages.IntegerField(2, required=True)
-    card_2_index = messages.IntegerField(3, required=True)
-    card_2_value = messages.IntegerField(4, required=True)
+    card_1 = messages.MessageField(CardForm, 1)
+    card_2 = messages.MessageField(CardForm, 2)
 
     matched = messages.BooleanField(5, required=True)
 
 
 class HistoryForm(messages.Message):
     """Holds a list of HistoryMove forms to show history step-by-step"""
-    items = messages.MessageField(HistoryMoveForm, 1, repeated=True)
+    moves = messages.MessageField(HistoryMoveForm, 1, repeated=True)
 
 
 class StringMessage(messages.Message):
