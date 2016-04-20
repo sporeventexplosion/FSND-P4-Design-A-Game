@@ -4,7 +4,7 @@ from google.appengine.api import taskqueue, memcache
 from google.appengine.ext import ndb
 
 from models import StringMessage, GameForm, NewGameForm, ScoreForms, \
-        MakeMoveForm
+        MakeMoveForm, GameForms
 from models import User, Game, Score
 
 USER_REQUEST = endpoints.ResourceContainer(
@@ -16,8 +16,11 @@ GET_GAME_REQUEST = endpoints.ResourceContainer(
 MAKE_MOVE_REQUEST = endpoints.ResourceContainer(
         MakeMoveForm,
         urlsafe_game_key=messages.StringField(1))
+HIGH_SCORE_REQUEST = endpoints.ResourceContainer(
+        limit=messages.IntegerField(1))
 
-MEMCACHE_TOTAL_MOVES = 'TOTAL_MOVES'
+
+MEMCACHE_AVERAGE_MOVES = 'AVERAGE_MOVES'
 
 
 @endpoints.api(name='games', version='v1')
@@ -188,18 +191,62 @@ class GamesApi(remote.Service):
     def get_average_attempts(self, request):
         """Get the cached average moves remaining"""
         return StringMessage(
-                message=memcache.get(MEMCACHE_TOTAL_MOVES) or 'Not cached')
+                message=memcache.get(MEMCACHE_AVERAGE_MOVES) or 'Not cached')
+
+    @endpoints.method(request_message=USER_REQUEST,
+                      response_message=GameForms,
+                      path='game/user/{username}',
+                      name='get_user_games',
+                      http_method='GET')
+    def get_user_games(self, request):
+        """Get all in-progress games of a user"""
+        user = self._get_user(request.username)
+        games = Game.query(Game.user==user.key, Game.game_over==False).fetch()
+        return GameForms(items=[i.to_form() for i in games])
+
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=StringMessage,
+                      path='game/cancel/{urlsafe_game_key}',
+                      name='cancel_game',
+                      http_method='GET')
+    def cancel_game(self, request):
+        """Cancels a game. Only works if game_over is false"""
+        game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
+        if game.game_over == True:
+            raise endpoints.BadRequestException(
+                    'Completed games cannot be canceled')
+        game.key.delete()
+        return StringMessage(message='Game has been canceled')
+
+    @endpoints.method(request_message=HIGH_SCORE_REQUEST,
+                      response_message=ScoreForms,
+                      path='/scores/highscores',
+                      name='get_high_scores',
+                      http_method='GET')
+    def get_high_scores(self, request):
+        """
+        Gets high scores, optionally with a limit on the number of results
+        """
+        query = Score.query().order(-Score.score)
+        if request.limit is not None:
+            if request.limit <= 0:
+                raise endpoints.BadRequestException('Limit must be positive')
+            scores = query.fetch(request.limit)
+        else:
+            scores = query.fetch()
+        return ScoreForms(items=[score.to_form() for score in scores])
+
 
     @staticmethod
     def _cache_average_moves():
         """Populates memcache with the average moves remaining of Games"""
-        games = Game.query(Game.game_over==False, projection=('movew')).fetch()
+        games = Game.query(Game.game_over==False, projection=('moves')).fetch()
         if games:
             count = len(games)
             total_moves = sum([game.moves
                                         for game in games])
             average = float(total_moves)/count
-            memcache.set(MEMCACHE_TOTAL_MOVES,
+            memcache.set(MEMCACHE_AVERAGE_MOVES,
                          'The average moves remaining is %.2f'.format(average))
 
 api = endpoints.api_server([GamesApi])
