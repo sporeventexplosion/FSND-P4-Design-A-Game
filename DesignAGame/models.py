@@ -133,7 +133,7 @@ class Game(ndb.Model):
         # Make sure the score is not negative
         return max(score, 0)
 
-    def to_form(self, message):
+    def to_form(self, message=None):
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.username = self.user.get().username
@@ -150,7 +150,8 @@ class Game(ndb.Model):
 
         form.shown_cards = self._uncovered_pairs_to_uncovered_list()
         form.game_over = self.game_over
-        form.message = message
+        if message is not None:
+            form.message = message
         return form
 
     def end_game(self):
