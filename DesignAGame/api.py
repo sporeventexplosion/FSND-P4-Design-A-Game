@@ -131,17 +131,18 @@ class GamesApi(remote.Service):
                     'The card chosen has already been uncovered')
         # Check that the card is not the the same as the previous card in a
         # pair of choices
-        if game.previous_choice != -1 and card == game.previous_choice:
+        if game.previous_choice is not None and card == game.previous_choice:
             raise endpoints.BadRequestException(
                     'Cannot choose the same card as the first card in a move')
 
-        if game.previous_choice == -1:
+        if game.previous_choice is None:
             message = 'You uncover a card'
             game.is_first_card = True
             # Get the response first before setting previous_choice avoid
             # the need of more 'hacks' to get the correct game.previous_choice
             game.current_choice = card
             response = game.to_form('You uncover a card')
+            # Set this later to avoid intefering with.to_form
             game.previous_choice = card
         else:
             game.current_choice = card
@@ -158,7 +159,7 @@ class GamesApi(remote.Service):
                 message = 'Not matched'
 
             response = game.to_form(message)
-            game.previous_choice = -1
+            game.previous_choice = None
 
         game.put()
         return response

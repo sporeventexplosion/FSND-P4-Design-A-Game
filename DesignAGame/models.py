@@ -23,7 +23,7 @@ class Game(ndb.Model):
     cards = ndb.IntegerProperty(repeated=True, indexed=False)
     uncovered_pairs = ndb.IntegerProperty(repeated=True, indexed=False)
     # the index of number first shown in a pair of numbers to check matches
-    previous_choice = ndb.IntegerProperty(indexed=False, default=-1)
+    previous_choice = ndb.IntegerProperty(indexed=False)
     attempts = ndb.IntegerProperty(default=0)
     game_over = ndb.BooleanProperty(default=False)
     start_time = ndb.DateTimeProperty(required=True)
