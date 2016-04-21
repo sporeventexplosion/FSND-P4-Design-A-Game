@@ -89,6 +89,7 @@ class Game(ndb.Model):
         return matching_card_mapping
 
     def _get_paired_history(self):
+        """Get game history in pairs of cards, or moves"""
         history = self.history
         paired_history = []
         for i in xrange(0, self.moves * 2, 2):
@@ -144,6 +145,7 @@ class Game(ndb.Model):
         return max(score, 0)
 
     def get_history(self):
+        """Get the history of a game as a HistoryForm"""
         paired_history = self._get_paired_history()
         moves = self.moves
         history_move_form_list = []
@@ -162,6 +164,7 @@ class Game(ndb.Model):
         return HistoryForm(moves=history_move_form_list)
 
     def to_form(self, message=None):
+        """Return the GameForm representation of a game"""
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.username = self.user.get().username
@@ -189,6 +192,7 @@ class Game(ndb.Model):
         return form
 
     def end_game(self):
+        """End a game"""
         self.game_over = True
         self.end_time = datetime.now()
         score = self._calculate_score()
@@ -221,6 +225,7 @@ class Score(ndb.Model):
     time_used = ndb.IntegerProperty(required=True)
 
     def to_form(self):
+        """Returns the ScoreForm representation of a score entry"""
         return ScoreForm(username=self.user.get().username,
                          datetime=str(self.datetime), score=self.score,
                          moves=self.moves, time_used=time_used)
