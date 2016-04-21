@@ -37,9 +37,6 @@ class Game(ndb.Model):
     num_pairs = ndb.ComputedProperty(lambda self: len(self.cards) / 2)
     num_uncovered_pairs \
             = ndb.ComputedProperty(lambda self: len(self.uncovered_pairs))
-    # Set by make_move, this stores whether the current card is the first card
-    # in a move, which contains two cards
-    is_first_card = ndb.BooleanProperty(default=True)
 
     # Only stored temporarily to track current move
     current_choice = None
@@ -178,7 +175,7 @@ class Game(ndb.Model):
         cards = self.cards
 
         # Only add the previous choice if this is the second card in a move
-        if not self.is_first_card:
+        if self.previous_choice is not None:
             form.previous_choice = CardForm(index=previous_choice,
                                             value=cards[previous_choice])
         if self.current_choice is not None:
@@ -195,6 +192,8 @@ class Game(ndb.Model):
         self.game_over = True
         self.end_time = datetime.now()
         score = self._calculate_score()
+        # Clear previous_choice
+        self.previous_choice = None
 
         self.put()
 

@@ -137,7 +137,6 @@ class GamesApi(remote.Service):
 
         if game.previous_choice is None:
             message = 'You uncover a card'
-            game.is_first_card = True
             game.current_choice = card
             response = game.to_form('You uncover a card')
             # Set this after getting response to avoid intefering with.to_form
@@ -145,7 +144,6 @@ class GamesApi(remote.Service):
         else:
             game.current_choice = card
             game.history.extend([game.previous_choice, card])
-            game.is_first_card = False
 
             if game.cards[game.previous_choice] == game.cards[card]:
                 message = 'Matched!'
