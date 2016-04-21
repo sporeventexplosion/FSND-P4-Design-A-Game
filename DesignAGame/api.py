@@ -27,6 +27,7 @@ MEMCACHE_AVERAGE_MOVES = 'AVERAGE_MOVES'
 @endpoints.api(name='games', version='v1')
 class GamesApi(remote.Service):
     def _get_user(self, username):
+        """Gets a user by username"""
         user = User.query(User.username == username).get()
         if not user:
             raise endpoints.NotFoundException(
@@ -257,7 +258,7 @@ class GamesApi(remote.Service):
 
     @staticmethod
     def _cache_average_moves():
-        """Populates memcache with the average moves remaining of Games"""
+        """Populates memcache with the average moves elapsed Games"""
         games = Game.query(Game.game_over == False, projection=('moves')) \
             .fetch()
         if games:
