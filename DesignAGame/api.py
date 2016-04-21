@@ -141,7 +141,7 @@ class GamesApi(remote.Service):
             # Get the response first before setting previous_choice avoid
             # the need of more 'hacks' to get the correct game.previous_choice
             game.current_choice = card
-            response = game.to_form('message')
+            response = game.to_form('You uncover a card')
             game.previous_choice = card
         else:
             game.current_choice = card
