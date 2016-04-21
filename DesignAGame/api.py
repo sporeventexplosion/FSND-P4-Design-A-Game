@@ -146,7 +146,6 @@ class GamesApi(remote.Service):
         else:
             game.current_choice = card
             game.history.extend([game.previous_choice, card])
-            game.moves += 1
             game.is_first_card = False
 
             if game.cards[game.previous_choice] == game.cards[card]:

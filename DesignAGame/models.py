@@ -28,7 +28,7 @@ class Game(ndb.Model):
     start_time = ndb.DateTimeProperty(required=True)
     end_time = ndb.DateTimeProperty()
     history = ndb.IntegerProperty(repeated=True, indexed=False)
-    moves = ndb.IntegerProperty(default=0)
+    moves = ndb.ComputedProperty(lambda self: len(self.history) / 2)
     end_time = ndb.DateTimeProperty()
     user = ndb.KeyProperty(required=True, kind='User')
     # Set by make_move, this stores whether the current card is the first card
