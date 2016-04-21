@@ -47,7 +47,8 @@ class GamesApi(remote.Service):
 
         entity = key.get()
         if not entity:
-            raise endpoints.NotFoundException('Entity cannot be found')
+            exception_message = 'Object [%s] cannot be found' % model.__name__
+            raise endpoints.NotFoundException(exception_message)
         if not isinstance(entity, model):
             raise endpoints.BadRequestException('Incorrect kind')
         return entity
