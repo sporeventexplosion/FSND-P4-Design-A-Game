@@ -250,6 +250,7 @@ class GamesApi(remote.Service):
                       name='get_game_history',
                       http_method='GET')
     def get_game_history(self, request):
+        """Get the history of a game as a list of moves"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
         return game.get_history()
 
