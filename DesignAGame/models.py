@@ -4,6 +4,7 @@ from google.appengine.ext import ndb
 
 import random
 from datetime import datetime
+from calendar import timegm
 
 
 class User(ndb.Model):
@@ -197,8 +198,16 @@ class Game(ndb.Model):
 
         self.put()
 
+        # Calculate the time used
+        start_timestamp = timegm(self.start_time.utctimetuple())
+        end_timestamp = timegm(self.end_time.utctimetuple())
+
+        time_used = end_timestamp - start_timestamp
+
+
         score_entity = Score(user=self.user, datetime=self.end_time,
-                             score=score, moves=self.moves)
+                             score=score, moves=self.moves,
+                             time_used=time_used)
         score_entity.put()
 
 
@@ -209,11 +218,13 @@ class Score(ndb.Model):
     datetime = ndb.DateTimeProperty(required=True)
     moves = ndb.IntegerProperty(required=True)
     score = ndb.IntegerProperty(required=True)
+    # The amount of time, in seconds, between starting and finishing
+    time_used = ndb.IntegerProperty(required=True)
 
     def to_form(self):
         return ScoreForm(username=self.user.get().username,
                          datetime=str(self.datetime), score=self.score,
-                         moves=self.moves)
+                         moves=self.moves, time_used=time_used)
 
 
 class CardForm(messages.Message):
@@ -258,6 +269,7 @@ class ScoreForm(messages.Message):
     datetime = messages.StringField(2, required=True)
     score = messages.IntegerField(3, required=True)
     moves = messages.IntegerField(4, required=True)
+    time_used = messages.IntegerField(5, required=True)
 
 
 class ScoreForms(messages.Message):
