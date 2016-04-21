@@ -228,7 +228,7 @@ class Score(ndb.Model):
         """Returns the ScoreForm representation of a score entry"""
         return ScoreForm(username=self.user.get().username,
                          datetime=str(self.datetime), score=self.score,
-                         moves=self.moves, time_used=time_used)
+                         moves=self.moves, time_used=self.time_used)
 
 
 class CardForm(messages.Message):
