@@ -190,6 +190,8 @@ class Game(ndb.Model):
         self.end_time = datetime.now()
         score = self._calculate_score()
 
+        self.put()
+
         score_entity = Score(user=self.user, datetime=datetime.now(),
                              score=score, moves=self.moves)
         score_entity.put()
