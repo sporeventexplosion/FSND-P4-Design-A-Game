@@ -138,11 +138,9 @@ class GamesApi(remote.Service):
         if game.previous_choice is None:
             message = 'You uncover a card'
             game.is_first_card = True
-            # Get the response first before setting previous_choice avoid
-            # the need of more 'hacks' to get the correct game.previous_choice
             game.current_choice = card
             response = game.to_form('You uncover a card')
-            # Set this later to avoid intefering with.to_form
+            # Set this after getting response to avoid intefering with.to_form
             game.previous_choice = card
         else:
             game.current_choice = card
