@@ -28,9 +28,14 @@ class Game(ndb.Model):
     start_time = ndb.DateTimeProperty(required=True)
     end_time = ndb.DateTimeProperty()
     history = ndb.IntegerProperty(repeated=True, indexed=False)
-    moves = ndb.ComputedProperty(lambda self: len(self.history) / 2)
     end_time = ndb.DateTimeProperty()
     user = ndb.KeyProperty(required=True, kind='User')
+
+    # Computed properties
+    moves = ndb.ComputedProperty(lambda self: len(self.history) / 2)
+    num_pairs = ndb.ComputedProperty(lambda self: len(self.cards) / 2)
+    num_uncovered_pairs \
+            = ndb.ComputedProperty(lambda self: len(self.uncovered_pairs))
     # Set by make_move, this stores whether the current card is the first card
     # in a move, which contains two cards
     is_first_card = ndb.BooleanProperty(default=True)
@@ -73,7 +78,7 @@ class Game(ndb.Model):
         Returns a list where the value of one card is the index of the other
         card with the same value
         """
-        value_mapping = [[] for i in xrange(len(self.cards) / 2)]
+        value_mapping = [[] for i in xrange(self.num_pairs)]
         for index, value in enumerate(self.cards):
             value_mapping[value].append(index)
 
@@ -135,7 +140,7 @@ class Game(ndb.Model):
                 view_count[move[1]] += 1
 
         if perfect_match:
-            score += len(self.cards) / 2 * 5
+            score += self.num_pairs * 5
 
         # Make sure the score is not negative
         return max(score, 0)
@@ -164,7 +169,7 @@ class Game(ndb.Model):
         form.username = self.user.get().username
 
         form.moves = self.moves
-        form.num_pairs = len(self.cards) / 2
+        form.num_pairs = self.num_pairs
 
         previous_choice = self.previous_choice
         current_choice = self.current_choice

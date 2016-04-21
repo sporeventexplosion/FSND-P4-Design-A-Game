@@ -151,7 +151,7 @@ class GamesApi(remote.Service):
             if game.cards[game.previous_choice] == game.cards[card]:
                 message = 'Matched!'
                 game.uncovered_pairs.append(game.cards[card])
-                if len(game.uncovered_pairs) == len(game.cards) / 2:
+                if game.num_uncovered_pairs == game.num_pairs:
                     game.end_game()
                     message = 'You win!'
             else:
