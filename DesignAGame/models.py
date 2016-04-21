@@ -197,7 +197,7 @@ class Game(ndb.Model):
 
         self.put()
 
-        score_entity = Score(user=self.user, datetime=datetime.now(),
+        score_entity = Score(user=self.user, datetime=self.end_time,
                              score=score, moves=self.moves)
         score_entity.put()
 
