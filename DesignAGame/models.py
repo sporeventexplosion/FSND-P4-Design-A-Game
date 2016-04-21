@@ -94,7 +94,7 @@ class Game(ndb.Model):
     def _get_paired_history(self):
         history = self.history
         paired_history = []
-        for i in xrange(0, len(history), 2):
+        for i in xrange(0, self.moves * 2, 2):
             history_pair = (history[i], history[i + 1])
             paired_history.append(history_pair)
 
