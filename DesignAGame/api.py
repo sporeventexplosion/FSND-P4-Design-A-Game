@@ -184,11 +184,11 @@ class GamesApi(remote.Service):
         return ScoreForms(items=[score.to_form() for score in scores])
 
     @endpoints.method(response_message=StringMessage,
-                      path='games/average_attempts',
-                      name='get_average_attempts_remaining',
+                      path='games/average_moves',
+                      name='get_average_moves',
                       http_method='GET')
-    def get_average_attempts(self, request):
-        """Get the cached average moves remaining"""
+    def get_average_moves(self, request):
+        """Get the cached average moves elapsed"""
         return StringMessage(
                 message=memcache.get(MEMCACHE_AVERAGE_MOVES) or 'Not cached')
 
