@@ -6,7 +6,7 @@ from google.appengine.ext import ndb
 from models import StringMessage, GameForm, NewGameForm, ScoreForms, \
         MakeMoveForm, GameForms, RankingForm, RankingForms, HistoryForm, \
         HistoryMoveForm
-from models import User, Game, Score
+from models import User, Game, Score, Move
 
 USER_REQUEST = endpoints.ResourceContainer(
         username=messages.StringField(1, required=True),
@@ -145,7 +145,7 @@ class GamesApi(remote.Service):
             game.previous_choice = card
         else:
             game.current_choice = card
-            game.history.extend([game.previous_choice, card])
+            game.history.append(Move(card_1=game.previous_choice, card_2=card))
 
             if game.cards[game.previous_choice] == game.cards[card]:
                 message = 'Matched!'

@@ -18,6 +18,12 @@ class User(ndb.Model):
     performance = ndb.FloatProperty(default=0.0)
 
 
+class Move(ndb.Model):
+    """A move, consisting of two cards. Stored as a structured property"""
+    card_1 = ndb.IntegerProperty(required=True)
+    card_2 = ndb.IntegerProperty(required=True)
+
+
 class Game(ndb.Model):
     """Game object"""
     cards = ndb.IntegerProperty(repeated=True, indexed=False)
@@ -28,15 +34,15 @@ class Game(ndb.Model):
     game_over = ndb.BooleanProperty(default=False)
     start_time = ndb.DateTimeProperty(required=True)
     end_time = ndb.DateTimeProperty()
-    history = ndb.IntegerProperty(repeated=True, indexed=False)
+    history = ndb.StructuredProperty(Move, repeated=True)
     end_time = ndb.DateTimeProperty()
     user = ndb.KeyProperty(required=True, kind='User')
 
     # Computed properties
-    moves = ndb.ComputedProperty(lambda self: len(self.history) / 2)
+    moves = ndb.ComputedProperty(lambda self: len(self.history))
     num_pairs = ndb.ComputedProperty(lambda self: len(self.cards) / 2)
     num_uncovered_pairs \
-            = ndb.ComputedProperty(lambda self: len(self.uncovered_pairs))
+        = ndb.ComputedProperty(lambda self: len(self.uncovered_pairs))
 
     # Only stored temporarily to track current move
     current_choice = None
@@ -120,23 +126,23 @@ class Game(ndb.Model):
         # The number of times a card has been shown, ordered by index.
         view_count = [0] * len(self.cards)
 
-        paired_history = self._get_paired_history()
+        history = self.history
 
-        for move in paired_history:
+        for move in history:
             # Check if match
-            if cards[move[0]] == cards[move[1]]:
+            if cards[move.card_1] == cards[move.card_2]:
                 score += 20
             else:
                 # Get the index of the 'correct' match of the first card
-                correct_match = matching_card_mapping[move[0]]
+                correct_match = matching_card_mapping[move.card_1]
 
                 # if the correct match has been previously seen by the player
                 if view_count[correct_match] > 0:
                     score -= view_count[correct_match] * 5
                     perfect_match = False
 
-                view_count[move[0]] += 1
-                view_count[move[1]] += 1
+                view_count[move.card_1] += 1
+                view_count[move.card_2] += 1
 
         if perfect_match:
             score += self.num_pairs * 5
@@ -146,17 +152,19 @@ class Game(ndb.Model):
 
     def get_history(self):
         """Get the history of a game as a HistoryForm"""
-        paired_history = self._get_paired_history()
         moves = self.moves
         history_move_form_list = []
         cards = self.cards
 
-        for move in paired_history:
-            matched = cards[move[0]] == cards[move[1]]
-            moveform = HistoryMoveForm(card_1=CardForm(index=move[0],
-                                                       value=cards[move[0]]),
-                                       card_2=CardForm(index=move[1],
-                                                       value=cards[move[1]]),
+        for move in self.history:
+            matched = cards[move.card_1] == cards[move.card_2]
+
+            card_1 = CardForm(index=move.card_1,
+                              value=cards[move.card_1]),
+            card_2 = CardForm(index=move.card_2,
+                              value=cards[move.card_2])
+
+            moveform = HistoryMoveForm(card_1=card_1, card_2=card_2,
                                        matched=matched)
 
             history_move_form_list.append(moveform)
@@ -206,7 +214,6 @@ class Game(ndb.Model):
         end_timestamp = timegm(self.end_time.utctimetuple())
 
         time_used = end_timestamp - start_timestamp
-
 
         score_entity = Score(user=self.user, datetime=self.end_time,
                              score=score, moves=self.moves,
