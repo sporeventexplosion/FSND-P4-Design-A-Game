@@ -14,6 +14,14 @@ handlers:
 - url: /_ah/spi/.*
   script: api.api
 
+- url: /tasks/cache_average_moves
+  script: main.app
+  login: admin
+
+- url: /crons/send_reminder
+  script: main.app
+  login: admin
+
 libraries:
 - name: webapp2
   version: "2.5.2"

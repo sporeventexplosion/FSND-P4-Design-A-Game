@@ -164,7 +164,7 @@ class Game(ndb.Model):
             matched = cards[move.card_1] == cards[move.card_2]
 
             card_1 = CardForm(index=move.card_1,
-                              value=cards[move.card_1]),
+                              value=cards[move.card_1])
             card_2 = CardForm(index=move.card_2,
                               value=cards[move.card_2])
 
@@ -211,16 +211,29 @@ class Game(ndb.Model):
         # Clear previous_choice
         self.previous_choice = None
 
-
         # Calculate the time used
         start_timestamp = timegm(self.start_time.utctimetuple())
         end_timestamp = timegm(self.end_time.utctimetuple())
 
         time_used = end_timestamp - start_timestamp
 
+
+
         score_entity = Score(user=self.user, datetime=self.end_time,
                              score=score, moves=self.moves,
                              time_used=time_used)
+
+        # Calculate user performance
+
+        user_scores = Score.query(Score.user == self.user).fetch()
+
+        total = sum([score.score for score in user_scores])
+        performance = total / len(user_scores)
+
+        user = self.user.get()
+        user.performance = performance
+        user.put()
+
         score_entity.put()
 
 

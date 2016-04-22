@@ -1,4 +1,5 @@
 import endpoints
+import datetime
 from protorpc import remote, messages
 from google.appengine.api import taskqueue, memcache
 from google.appengine.ext import ndb
@@ -26,6 +27,7 @@ MEMCACHE_AVERAGE_MOVES = 'AVERAGE_MOVES'
 
 @endpoints.api(name='games', version='v1')
 class GamesApi(remote.Service):
+    """Defines an Endpoints API for a Concentration game"""
     def _get_user(self, username):
         """Gets a user by username"""
         user = User.query(User.username == username).get()
@@ -92,8 +94,7 @@ class GamesApi(remote.Service):
         except ValueError as ex:
             raise endpoints.BadRequestException(str(ex))
 
-        # TODO: implement task queues
-        # taskqueue.add(url='/tasks/cache_average_moves')
+        taskqueue.add(url='/tasks/cache_average_moves')
         return game.to_form('Good luck playing Concentration!')
 
     @endpoints.method(request_message=GET_GAME_REQUEST,
@@ -116,7 +117,7 @@ class GamesApi(remote.Service):
                       response_message=GameForm,
                       path='game/{urlsafe_game_key}',
                       name='make_move',
-                      http_method='PUT')
+                      http_method='POST')
     def make_move(self, request):
         """Makes a move. Returns a game state with message"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -159,6 +160,11 @@ class GamesApi(remote.Service):
             response = game.to_form(message)
             game.previous_choice = None
 
+        # Sets the last_move time
+        game.last_move = datetime.datetime.now()
+        game.email_sent = False
+
+
         game.put()
         return response
 
@@ -188,7 +194,8 @@ class GamesApi(remote.Service):
     def get_average_moves(self, request):
         """Get the cached average moves elapsed"""
         return StringMessage(
-                message=memcache.get(MEMCACHE_AVERAGE_MOVES) or 'Not cached')
+                message=memcache.get(MEMCACHE_AVERAGE_MOVES)
+                                     or 'Average moves has not been cached')
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=GameForms,
@@ -206,7 +213,7 @@ class GamesApi(remote.Service):
                       response_message=StringMessage,
                       path='game/cancel/{urlsafe_game_key}',
                       name='cancel_game',
-                      http_method='GET')
+                      http_method='POST')
     def cancel_game(self, request):
         """Cancels a game. Only works if game_over is false"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -240,7 +247,7 @@ class GamesApi(remote.Service):
                       http_method='GET')
     def get_user_rankings(self, request):
         """Returns user rankings (average score in this case)"""
-        users = User.query().fetch()
+        users = User.query().order(-User.performance).fetch()
         return RankingForms(
                 items=[RankingForm(username=user.username,
                                    performance=user.performance)
@@ -259,13 +266,33 @@ class GamesApi(remote.Service):
     @staticmethod
     def _cache_average_moves():
         """Populates memcache with the average moves elapsed Games"""
-        games = Game.query(Game.game_over == False, projection=('moves')) \
+        games = Game.query(Game.game_over == False, projection=['moves']) \
             .fetch()
+
+        print 'hello'
+
+        print '\n\n\n\n'
+        print games
+        print '\n\n\n\n'
         if games:
             count = len(games)
             total_moves = sum([game.moves for game in games])
-            average = float(total_moves)/count
+            average = float(total_moves) / count
             memcache.set(MEMCACHE_AVERAGE_MOVES,
-                         'The average moves remaining is %.2f'.format(average))
+                         'The average moves elapsed in active games is %.2f'
+                         % average)
+
+        return games
+
+    @staticmethod
+    def _get_reminder_games():
+        """Gets a list of games that need email reminders."""
+        # the amount of time before sending a reminder
+        time_before_reminder = datetime.timedelta(hours=12)
+        remind_before = datetime.datetime.now() - time_before_reminder
+
+        games = Game.query(Game.game_over == False, Game.email_sent == False,
+                           Game.last_move < remind_before).fetch()
+        return games
 
 api = endpoints.api_server([GamesApi])
