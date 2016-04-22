@@ -1,0 +1,10 @@
+Document your design decisions by answering the following questions:
+What additional properties did you add to your models and why?
+What were some of the trade-offs or struggles you faced when implementing the new game logic?
+These answers should be in a file Design.txt. Your responses can be in paragraph form or bulleted lists. This document should be around 500 words long.
+
+To Game, I added a number of convenience properties to make my code more cohesive and less repetitive. In the beginning, I chose to implement properties such as Game.moves as a separate IntegerProperty, but ran into problems when these values were updated from multiple places. Num_pairs and num_uncovered_pairs were also originally calculated inside each function. Later in the project, I discovered that the ComputedProperty was a good way to avoid such calculations and decided to move the separate expressions into ComputedProperty lambda functions. I also added last_move and email_sent to only send emails to users inactive for >12 hours, and only send the email once before a further move is made.
+
+When designing the API, I had to rework critical parts of Datastore models (especially the Game model where most of the logic is) multiple times, being relatively unfamiliar with the requirements and implications of the Datastore's architecture. For instance, I initially implemented the history on the Game object as a list of integers, but I found this required large amounts of unnecessarily boilerplate code to ensure integrity and decided to move to the current Move structured property, which holds the index to 2 cards together.
+
+I also found the scoring to be quite a challenge as it required some logic that was difficult to implement on the original model, such as tracking the number of times a matching card was shown. The original solution relied on a large number of enumerate()s and executed slowly. After several rounds of optimizations, I was able to clean the logic of the application to a large extent and improve performance. This also included refactoring multiple times the Game logic.
