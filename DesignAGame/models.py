@@ -217,8 +217,6 @@ class Game(ndb.Model):
 
         time_used = end_timestamp - start_timestamp
 
-
-
         score_entity = Score(user=self.user, datetime=self.end_time,
                              score=score, moves=self.moves,
                              time_used=time_used)

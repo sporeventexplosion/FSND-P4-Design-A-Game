@@ -164,7 +164,6 @@ class GamesApi(remote.Service):
         game.last_move = datetime.datetime.now()
         game.email_sent = False
 
-
         game.put()
         return response
 
@@ -193,9 +192,10 @@ class GamesApi(remote.Service):
                       http_method='GET')
     def get_average_moves(self, request):
         """Get the cached average moves elapsed"""
-        return StringMessage(
-                message=memcache.get(MEMCACHE_AVERAGE_MOVES)
-                                     or 'Average moves has not been cached')
+        message = memcache.get(MEMCACHE_AVERAGE_MOVES)
+        if not message:
+            message = 'Average moves has not been cached'
+        return StringMessage(message=message)
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=GameForms,

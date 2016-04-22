@@ -22,6 +22,7 @@ class SendReminderEmail(webapp2.RequestHandler):
                                subject,
                                body)
 
+
 class CacheAverageMoves(webapp2.RequestHandler):
     def post(self):
         """Update game listing announcement in memcache."""
