@@ -38,6 +38,10 @@ class Game(ndb.Model):
     end_time = ndb.DateTimeProperty()
     user = ndb.KeyProperty(required=True, kind='User')
 
+    # used to send reminder emails
+    last_move = ndb.DateTimeProperty(auto_now_add=True)
+    email_sent = ndb.BooleanProperty(default=False)
+
     # Computed properties
     moves = ndb.ComputedProperty(lambda self: len(self.history))
     num_pairs = ndb.ComputedProperty(lambda self: len(self.cards) / 2)
@@ -207,7 +211,6 @@ class Game(ndb.Model):
         # Clear previous_choice
         self.previous_choice = None
 
-        self.put()
 
         # Calculate the time used
         start_timestamp = timegm(self.start_time.utctimetuple())
