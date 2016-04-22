@@ -22,6 +22,10 @@ class SendReminderEmail(webapp2.RequestHandler):
                                subject,
                                body)
 
+            # Avoid repeatedly sending emails
+            game.email_sent = True
+            game.put()
+
 
 class CacheAverageMoves(webapp2.RequestHandler):
     def post(self):
