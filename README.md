@@ -12,6 +12,18 @@
 
 - You can now check your score using `get_user_scores` and your username
 
+# Scoring
+
+- Uses history to generate a score
+
+- Each successful match is worth 20 points
+
+- If the player fails to match a matching tile which was previously shown, the score is subtracted by 5 times the number of times the tile has been shown. At the end, if here has not been any failed matches, a bonus score of 5 times the number of pairs in the level is added.
+
+- The score cannot go below 0
+
+- Scoring system based this page: http://dkmgames.com/memory/pairs.php
+
 ## Endpoints Method Reference
 
 ### `cancel_game`
@@ -144,14 +156,4 @@
     - Come up with a method for ranking the performance of each player.
       For "Guess a Number" this could be by winning percentage with ties broken by the average number of guesses.
     - Create an endpoint that returns this player ranking. The results should include each Player's name and the 'performance' indicator (eg. win/loss ratio).
-
- - **get_game_history**
-    - Your API Users may want to be able to see a 'history' of moves for each game.
-    - For example, Chess uses a format called <a href="https://en.wikipedia.org/wiki/Portable_Game_Notation" target="_blank">PGN</a>) which allows any game to be replayed and watched move by move.
-    - Add the capability for a Game's history to be presented in a similar way. For example: If a User made played 'Guess a Number' with the moves:
-    (5, 8, 7), and received messages such as: ('Too low!', 'Too high!',
-    'You win!'), an endpoint exposing the game_history might produce something like:
-    [('Guess': 5, result: 'Too low'), ('Guess': 8, result: 'Too high'),
-    ('Guess': 7, result: 'Win. Game over')].
-    - Adding this functionality will require some additional properties in the 'Game' model along with a Form, and endpoint to present the data to the User.
 
