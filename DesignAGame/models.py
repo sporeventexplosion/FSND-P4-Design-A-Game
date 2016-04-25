@@ -1,7 +1,6 @@
 """This file contains the models and ProtoRPC messages used by the API"""
 from protorpc import messages
 from google.appengine.ext import ndb
-
 import random
 from datetime import datetime
 from calendar import timegm

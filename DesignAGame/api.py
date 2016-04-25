@@ -45,8 +45,6 @@ class GamesApi(remote.Service):
         except Exception, e:
             if e.__class__.__name__ == 'ProtocolBufferDecodeError':
                 raise endpoints.BadRequestException('Invalid Key')
-            else:
-                raise
 
         entity = key.get()
         if not entity:
