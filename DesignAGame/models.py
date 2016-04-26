@@ -273,7 +273,6 @@ class GameForm(messages.Message):
     previous_choice = messages.MessageField(CardForm, 5)
     # The index and value of the current choice
     current_choice = messages.MessageField(CardForm, 6)
-    # Cards not shown are expressed as -1
     shown_cards = messages.MessageField(CardForm, 7, repeated=True)
     game_over = messages.BooleanField(8, required=True)
     message = messages.StringField(9, default='')
