@@ -202,7 +202,11 @@ class Game(ndb.Model):
         return form
 
     def end_game(self):
-        """End a game"""
+        """
+        Ends a game.
+        Calculates score and time used and an average score (including the
+        game that is being ended) for ranking a user.
+        """
         self.game_over = True
         self.end_time = datetime.now()
         score = self._calculate_score()
@@ -223,8 +227,10 @@ class Game(ndb.Model):
 
         user_scores = Score.query(Score.user == self.user).fetch()
 
-        total = sum([score.score for score in user_scores])
-        performance = total / len(user_scores)
+        # Include the score in the current game
+        total = sum([i.score for i in user_scores]) + score
+        # Float is needed to ensure the performance variable is not floored
+        performance = float(total) / (len(user_scores) + 1)
 
         user = self.user.get()
         user.performance = performance
