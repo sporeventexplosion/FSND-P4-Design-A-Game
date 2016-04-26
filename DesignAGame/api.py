@@ -26,7 +26,7 @@ MEMCACHE_AVERAGE_MOVES = 'AVERAGE_MOVES'
 
 
 @endpoints.api(name='games', version='v1')
-class GamesApi(remote.Service):
+class ConcentrationGameApi(remote.Service):
     """Defines an Endpoints API for a Concentration game"""
     def _get_user(self, username):
         """Gets a user by username"""
@@ -115,7 +115,7 @@ class GamesApi(remote.Service):
                       response_message=GameForm,
                       path='game/{urlsafe_game_key}',
                       name='make_move',
-                      http_method='POST')
+                      http_method='PUT')
     def make_move(self, request):
         """Makes a move. Returns a game state with message"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -123,7 +123,7 @@ class GamesApi(remote.Service):
 
         if game.game_over:
             return game.to_form('Game already over!')
-        if request.card < 0 or card >= len(game.cards):
+        if card not in xrange(len(game.cards)):
             raise endpoints.BadRequestException(
                     'Index is beyond bounds of the current game')
         # Check the card has not already been uncovered
@@ -211,7 +211,7 @@ class GamesApi(remote.Service):
                       response_message=StringMessage,
                       path='game/cancel/{urlsafe_game_key}',
                       name='cancel_game',
-                      http_method='POST')
+                      http_method='DELETE')
     def cancel_game(self, request):
         """Cancels a game. Only works if game_over is false"""
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -293,4 +293,4 @@ class GamesApi(remote.Service):
                            Game.last_move < remind_before).fetch()
         return games
 
-api = endpoints.api_server([GamesApi])
+api = endpoints.api_server([ConcentrationGameApi])

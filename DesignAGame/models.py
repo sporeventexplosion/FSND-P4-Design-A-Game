@@ -69,14 +69,13 @@ class Game(ndb.Model):
     def _uncovered_pairs_to_uncovered_list(self):
         """
         For use in GameForm.
-        Generates a list where cards that have been uncovered are shown as
-        their value and cards that have not been uncovered are shown as -1
+        Generates a list of CardForm(s) containing all uncovered cards
         """
-        uncovered = [-1] * len(self.cards)
+        uncovered = []
 
         for index, card in enumerate(self.cards):
             if card in self.uncovered_pairs:
-                uncovered[index] = card
+                uncovered.append(CardForm(index=index, value=card))
 
         return uncovered
 
@@ -265,13 +264,11 @@ class GameForm(messages.Message):
     num_pairs = messages.IntegerField(4, required=True)
     # The index and value of the previously chosen card. This is not in the
     # list of shown cards to avoid confusion
-    #
-    # TODO: Update previous_choice and current_choice to CardForm
     previous_choice = messages.MessageField(CardForm, 5)
     # The index and value of the current choice
     current_choice = messages.MessageField(CardForm, 6)
     # Cards not shown are expressed as -1
-    shown_cards = messages.IntegerField(7, repeated=True)
+    shown_cards = messages.MessageField(CardForm, 7, repeated=True)
     game_over = messages.BooleanField(8, required=True)
     message = messages.StringField(9, default='')
 

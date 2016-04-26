@@ -1,6 +1,6 @@
 import webapp2
 from google.appengine.api import mail, app_identity
-from api import GamesApi
+from api import ConcentrationGameApi
 
 from models import User
 
@@ -9,7 +9,7 @@ class SendReminderEmail(webapp2.RequestHandler):
     def get(self):
         """Send a reminder email to each User with an email about games.
         Called every hour using a cron job"""
-        games = GamesApi._get_reminder_games()
+        games = ConcentrationGameApi._get_reminder_games()
         app_id = app_identity.get_application_id()
         for game in games:
             user = game.user.get()
@@ -30,7 +30,7 @@ class SendReminderEmail(webapp2.RequestHandler):
 class CacheAverageMoves(webapp2.RequestHandler):
     def post(self):
         """Update game listing announcement in memcache."""
-        a = GamesApi._cache_average_moves()
+        a = ConcentrationGameApi._cache_average_moves()
         self.response.set_status(204)
 
 

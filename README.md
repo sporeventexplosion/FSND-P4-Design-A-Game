@@ -146,14 +146,28 @@
 
 - Creates a new game in the name of the specified user with the specified number of pairs of cards (must be between 2 and 64 inclusive). Returns GameForm with the key to the newly created game.
 
- - **get_high_scores**
-    - Remember how you defined a score in Task 2?
-    Now we will use that to generate a list of high scores in descending order, a leader-board!
-    - Accept an optional parameter `number_of_results` that limits the number of results returned.
-    - Note: If you choose to implement a 2-player game this endpoint is not required.
+## ProtoRPC Message Containers
 
- - **get_user_rankings**
-    - Come up with a method for ranking the performance of each player.
-      For "Guess a Number" this could be by winning percentage with ties broken by the average number of guesses.
-    - Create an endpoint that returns this player ranking. The results should include each Player's name and the 'performance' indicator (eg. win/loss ratio).
+### `USER_REQUEST`
 
+Used for querying information about a user and creating new users.
+
+- *username*: String. Required
+
+- *email*: String. Required only when creating a user
+
+### `NEW_GAME_REQUEST`
+
+Used for creating a game. Contains NewGameForm (see below).
+
+### `GET_GAME_REQUEST`
+
+Used for fetching a game using the URL-safe key of that game.
+
+- *urlsafe_game_key*: String containing the URL-safe key of a game
+
+### `MAKE_MOVE_REQUEST`
+
+Used to make a move in an existing game. Contains MakeMoveForm (see below).
+
+- url_safe_
