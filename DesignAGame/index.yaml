@@ -20,3 +20,8 @@ indexes:
   properties:
   - name: game_over
   - name: moves
+
+- kind: Game
+  properties:
+  - name: user
+  - name: game_over

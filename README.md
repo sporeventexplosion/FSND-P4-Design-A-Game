@@ -104,7 +104,7 @@
 
 - Output: **GameForms**
 
-- Returns GameForms containing every active (non-finished) game of the user specified.
+- Returns GameForms containing every game of the user specified.
 
 ### `get_user_rankings`
 

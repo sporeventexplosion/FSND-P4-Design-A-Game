@@ -117,7 +117,21 @@ class ConcentrationGameApi(remote.Service):
                       name='make_move',
                       http_method='PUT')
     def make_move(self, request):
-        """Makes a move. Returns a game state with message"""
+        """
+        Makes a move. Returns a game state with message
+
+        First check for exceptional cases where the game is already over, an
+        invalid card index was specified, the card chosen has already been
+        uncovered, or that the second card in a move is the same as the first.
+
+        If the card is the first card in a move, set this to the game entity's
+        previous_choice.
+
+        If the card is the second in a move, append the
+        previous and current card to history and create a message containing
+        whether the two cards have been matched. If all cards are matched, end
+        the game.
+        """
         game = self._get_by_urlsafe(request.urlsafe_game_key, Game)
         card = request.card
 
@@ -126,12 +140,9 @@ class ConcentrationGameApi(remote.Service):
         if card not in xrange(len(game.cards)):
             raise endpoints.BadRequestException(
                     'Index is beyond bounds of the current game')
-        # Check the card has not already been uncovered
         if (game.cards[card] in game.uncovered_pairs):
             raise endpoints.BadRequestException(
                     'The card chosen has already been uncovered')
-        # Check that the card is not the the same as the previous card in a
-        # pair of choices
         if game.previous_choice is not None and card == game.previous_choice:
             raise endpoints.BadRequestException(
                     'Cannot choose the same card as the first card in a move')
@@ -140,7 +151,8 @@ class ConcentrationGameApi(remote.Service):
             message = 'You uncover a card'
             game.current_choice = card
             response = game.to_form('You uncover a card')
-            # Set this after getting response to avoid intefering with.to_form
+            # Set this after getting response to avoid intefering with the
+            # previous_choice logic in Game.to_form
             game.previous_choice = card
         else:
             game.current_choice = card
@@ -201,9 +213,9 @@ class ConcentrationGameApi(remote.Service):
                       name='get_user_games',
                       http_method='GET')
     def get_user_games(self, request):
-        """Get all in-progress games of a user"""
+        """Get all games of a user with unfinished games first"""
         user = self._get_user(request.username)
-        games = Game.query(Game.user == user.key, Game.game_over == False) \
+        games = Game.query(Game.user == user.key).order(Game.game_over) \
             .fetch()
         return GameForms(items=[i.to_form() for i in games])
 
@@ -228,7 +240,8 @@ class ConcentrationGameApi(remote.Service):
                       http_method='GET')
     def get_high_scores(self, request):
         """
-        Gets high scores, optionally with a limit on the number of results
+        Gets high scores in descending order, optionally with a (positive)
+        limit on the number of results
         """
         query = Score.query().order(-Score.score)
         if request.limit is not None:
@@ -244,7 +257,7 @@ class ConcentrationGameApi(remote.Service):
                       name='get_user_rankings',
                       http_method='GET')
     def get_user_rankings(self, request):
-        """Returns user rankings (average score in this case)"""
+        """Returns user rankings in descending order"""
         users = User.query().order(-User.performance).fetch()
         return RankingForms(
                 items=[RankingForm(username=user.username,
@@ -267,11 +280,6 @@ class ConcentrationGameApi(remote.Service):
         games = Game.query(Game.game_over == False, projection=['moves']) \
             .fetch()
 
-        print 'hello'
-
-        print '\n\n\n\n'
-        print games
-        print '\n\n\n\n'
         if games:
             count = len(games)
             total_moves = sum([game.moves for game in games])
@@ -284,8 +292,13 @@ class ConcentrationGameApi(remote.Service):
 
     @staticmethod
     def _get_reminder_games():
-        """Gets a list of games that need email reminders."""
-        # the amount of time before sending a reminder
+        """
+        Gets a list of games that need email reminders.
+
+        Only fetch those who have not made a move in the predefined reminder
+        time of 12 hours.
+        """
+
         time_before_reminder = datetime.timedelta(hours=12)
         remind_before = datetime.datetime.now() - time_before_reminder
 

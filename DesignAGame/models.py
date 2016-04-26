@@ -52,7 +52,12 @@ class Game(ndb.Model):
 
     @classmethod
     def new_game(cls, user, num_pairs):
-        """Creates a new game"""
+        """
+        Creates a new game
+
+        Generate a shuffled list of 2 to 64 pairs of cards and creates Game
+        entity containing this list of cards.
+        """
         # Ensure the number of pairs are within limits
         if num_pairs < 2:
             raise ValueError('Game must have >= 2 pairs of values')
@@ -82,7 +87,7 @@ class Game(ndb.Model):
     def _get_matching_card_mapping(self):
         """
         Returns a list where the value of one card is the index of the other
-        card with the same value
+        card with the same value. Used to get information about matching cards.
         """
         value_mapping = [[] for i in xrange(self.num_pairs)]
         for index, value in enumerate(self.cards):
@@ -95,16 +100,6 @@ class Game(ndb.Model):
             matching_card_mapping[pair[1]] = pair[0]
 
         return matching_card_mapping
-
-    def _get_paired_history(self):
-        """Get game history in pairs of cards, or moves"""
-        history = self.history
-        paired_history = []
-        for i in xrange(0, self.moves * 2, 2):
-            history_pair = (history[i], history[i + 1])
-            paired_history.append(history_pair)
-
-        return paired_history
 
     def _calculate_score(self):
         """
@@ -224,7 +219,6 @@ class Game(ndb.Model):
                              time_used=time_used)
 
         # Calculate user performance
-
         user_scores = Score.query(Score.user == self.user).fetch()
 
         # Include the score in the current game

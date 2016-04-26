@@ -7,8 +7,11 @@ from models import User
 
 class SendReminderEmail(webapp2.RequestHandler):
     def get(self):
-        """Send a reminder email to each User with an email about games.
-        Called every hour using a cron job"""
+        """
+        Send a reminder email to each User about each unfinished game.
+        Called every hour using a cron job
+        """
+
         games = ConcentrationGameApi._get_reminder_games()
         app_id = app_identity.get_application_id()
         for game in games:
