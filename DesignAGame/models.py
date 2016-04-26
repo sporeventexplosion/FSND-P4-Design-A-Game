@@ -321,8 +321,8 @@ class RankingForms(messages.Message):
 
 class HistoryMoveForm(messages.Message):
     """A single move for use in HistoryForm"""
-    card_1 = messages.MessageField(CardForm, 1)
-    card_2 = messages.MessageField(CardForm, 2)
+    card_1 = messages.MessageField(CardForm, 1, required=True)
+    card_2 = messages.MessageField(CardForm, 2, required=True)
 
     matched = messages.BooleanField(3, required=True)
 
